@@ -1,0 +1,11 @@
+# ── Core framework ────────────────────────────────────────────────────────────
+fastapi==0.100.0
+uvicorn==0.23.0
+python-multipart==0.0.6
+
+# ── Deliberately vulnerable dependencies (triggers Trivy dependency scan) ─────
+# CVE-2020-14343 (CRITICAL): arbitrary code execution via unsafe YAML load
+pyyaml==5.3.1
+
+# CVE-2023-44271 (HIGH): uncontrolled resource consumption in Pillow
+Pillow==9.0.0
