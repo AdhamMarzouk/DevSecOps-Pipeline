@@ -14,3 +14,12 @@ jobs:
 
       - name: Build Docker image
         run: docker build -t vuln-app ./app
+
+      - name: Save Docker Image as tar
+        run: docker save vuln-app -o vuln-app.tar
+
+      - name: Upload Image Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: vuln-app-image
+          path: vuln-app.tar
