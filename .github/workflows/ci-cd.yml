@@ -23,3 +23,24 @@ jobs:
         with:
           name: vuln-app-image
           path: vuln-app.tar
+
+  Container-Image-Scan:
+    runs-on: ubuntu-latest
+    needs: Build
+    steps:
+      - name: Download image artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: vuln-app-image
+
+      - name: Load image into Docker
+        run: docker load -i vuln-app.tar
+
+      - name: Run Trivy vulnerability scanner 
+        uses: aquasecurity/trivy-action@latest
+        with:
+          image-ref: vuln-app
+          exit-code: 1
+          severity: 'CRITICAL,HIGH'
+
+
