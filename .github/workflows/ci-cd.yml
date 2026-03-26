@@ -55,21 +55,4 @@ jobs:
         with:
           sarif_file: trivy-results.sarif
 
-      - name: Generate HTML report
-        uses: aquasecurity/trivy-action@v0.35.0
-        if: always()
-        with:
-          image-ref: vuln-app
-          severity: 'CRITICAL,HIGH'
-          format: template
-          template: '@/contrib/html.tpl'
-          output: trivy-report.html
-
-      - name: Upload HTML report as artifact
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: trivy-html-report
-          path: trivy-report.html
-
-
+          
