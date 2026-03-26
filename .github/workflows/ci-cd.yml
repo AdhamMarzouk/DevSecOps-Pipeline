@@ -46,6 +46,7 @@ jobs:
           image-ref: vuln-app
           exit-code: 1
           severity: 'CRITICAL,HIGH'
+          vuln-type: 'os'
           format: sarif
           output: trivy-image.sarif
 
