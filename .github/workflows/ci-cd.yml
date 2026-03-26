@@ -40,19 +40,44 @@ jobs:
       - name: Load image into Docker
         run: docker load -i vuln-app.tar
 
-      - name: Run Trivy vulnerability scanner 
+      - name: Trivy - Container OS scan
         uses: aquasecurity/trivy-action@v0.35.0
         with:
           image-ref: vuln-app
           exit-code: 1
           severity: 'CRITICAL,HIGH'
           format: sarif
-          output: trivy-results.sarif
+          output: trivy-image.sarif
 
-      - name: Upload results to GitHub security
+      - name: Upload container scan results
         uses: github/codeql-action/upload-sarif@v4
         if: always()
         with:
-          sarif_file: trivy-results.sarif
+          sarif_file: trivy-image.sarif
+          category: container-scan
+
+  Dependency-Scan:
+    runs-on: ubuntu-latest
+    needs: Build
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Trivy - Dependency scan
+        uses: aquasecurity/trivy-action@v0.35.0
+        with:
+          scan-type: fs
+          scan-ref: ./app/requirements.txt
+          exit-code: 1
+          severity: 'CRITICAL,HIGH'
+          format: sarif
+          output: trivy-deps.sarif
+
+      - name: Upload dependency scan results
+        uses: github/codeql-action/upload-sarif@v4
+        if: always()
+        with:
+          sarif_file: trivy-deps.sarif
+          category: dependency-scan
 
           
