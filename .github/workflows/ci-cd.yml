@@ -28,6 +28,24 @@ jobs:
           name: vuln-app-image
           path: vuln-app.tar
 
+
+
+  SonarQube-SAST:
+    runs-on: ubuntu-latest
+    needs: Build
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Run SonarCloud Scan
+        uses: SonarSource/sonarcloud-github-action@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+
   Container-Image-Scan:
     runs-on: ubuntu-latest
     needs: Build
