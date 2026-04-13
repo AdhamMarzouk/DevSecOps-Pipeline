@@ -74,3 +74,61 @@ jobs:
           sarif_file: trivy-results.sarif
 
 
+  ZAP-DAST:
+    runs-on: ubuntu-latest
+    needs: [SonarQube-SAST, Container-Image-Scan]
+    steps:
+      - name: Download image artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: vuln-app-image
+
+      - name: Load image into Docker
+        run: docker load -i vuln-app.tar
+
+      # --network host lets the ZAP container (which also runs in Docker internally)
+      # reach your app via localhost. Without this, localhost inside ZAP's container
+      # refers to ZAP itself, not the runner — you'd get connection refused on every request.
+      - name: Start vulnerable app
+        run: docker run -d --name vuln-app --network host vuln-app
+
+      # Uvicorn takes a moment to initialize. This loop checks the root route
+      # every 2 seconds for up to 30 seconds before giving up.
+      # If it times out, it dumps container logs so you know WHY the app didn't start.
+      - name: Wait for app to be ready
+        run: |
+          echo "Waiting for app to become available on port 8000..."
+          for i in $(seq 1 15); do
+            if curl -s -o /dev/null -w "%{http_code}" http://localhost:8000/ | grep -q "200"; then
+              echo "App is up on attempt $i!"
+              exit 0
+            fi
+            echo "Attempt $i/15 — not ready yet, retrying in 2s..."
+            sleep 2
+          done
+          echo "App never became available. Container logs:"
+          docker logs vuln-app
+          exit 1
+
+      # ZAP baseline scan: crawls the app, runs passive scanning (headers, info leakage)
+      # and a limited active scan (XSS, injection probing).
+      # fail_action: 'high' is your DAST gate — ZAP exits with code 1 if any HIGH-risk
+      # alert is found, which fails this job and stops the pipeline.
+      # -j enables the Ajax spider for better route discovery on JS-rendered content.
+      - name: Run OWASP ZAP Baseline Scan
+        uses: zaproxy/action-baseline@v0.14.0
+        with:
+          target: 'http://localhost:8000'
+          fail_action: 'high'
+          allow_issue_creation: false
+          cmd_options: '-j'
+
+      # Upload ZAP's HTML report regardless of whether the gate passed or failed.
+      # This is your evidence artifact — screenshots of this go into your report/demo.
+      - name: Upload ZAP Report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: zap-report
+          path: report_html.html
+    
