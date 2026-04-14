@@ -206,7 +206,6 @@ This section examines what each tool detected versus what was intentionally intr
 | Hardcoded Credentials (DB_PASS) | Yes | **Missed** | — | — |
 | Insecure Crypto (MD5) | Yes | **Missed** | — | — |
 | Broken Access Control | Yes | — | — | **Missed** |
-| DOM-based XSS | No (bonus) | — | — | Detected |
 | Vulnerable pyyaml | Yes | — | Detected | — |
 | Vulnerable Pillow | Yes | — | Detected | — |
 | EOL base image CVEs | Yes | — | Detected | — |
