@@ -73,6 +73,12 @@ jobs:
         with:
           sarif_file: trivy-results.sarif
 
+      - name: Upload Trivy results
+        uses: actions/upload-artifact@v4
+        with:
+          name: trivy-report
+          path: trivy-results.sarif
+
 
   ZAP-DAST:
     runs-on: ubuntu-latest
@@ -87,15 +93,9 @@ jobs:
       - name: Load image into Docker
         run: docker load -i vuln-app.tar
 
-      # --network host lets the ZAP container (which also runs in Docker internally)
-      # reach your app via localhost. Without this, localhost inside ZAP's container
-      # refers to ZAP itself, not the runner — you'd get connection refused on every request.
       - name: Start vulnerable app
         run: docker run -d --name vuln-app --network host vuln-app
 
-      # Uvicorn takes a moment to initialize. This loop checks the root route
-      # every 2 seconds for up to 30 seconds before giving up.
-      # If it times out, it dumps container logs so you know WHY the app didn't start.
       - name: Wait for app to be ready
         run: |
           echo "Waiting for app to become available on port 8000..."
@@ -111,11 +111,6 @@ jobs:
           docker logs vuln-app
           exit 1
 
-      # ZAP baseline scan: crawls the app, runs passive scanning (headers, info leakage)
-      # and a limited active scan (XSS, injection probing).
-      # fail_action: 'high' is your DAST gate — ZAP exits with code 1 if any HIGH-risk
-      # alert is found, which fails this job and stops the pipeline.
-      # -j enables the Ajax spider for better route discovery on JS-rendered content.
       - name: Run OWASP ZAP Baseline Scan
         uses: zaproxy/action-full-scan@v0.13.0
         with:
@@ -124,8 +119,6 @@ jobs:
           allow_issue_creation: false
           cmd_options: '-j'
 
-      # Upload ZAP's HTML report regardless of whether the gate passed or failed.
-      # This is your evidence artifact — screenshots of this go into your report/demo.
       - name: Upload ZAP Report
         uses: actions/upload-artifact@v4
         if: always()
