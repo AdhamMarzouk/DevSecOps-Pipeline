@@ -73,13 +73,6 @@ jobs:
         with:
           sarif_file: trivy-results.sarif
 
-      - name: Upload Trivy results
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: trivy-report
-          path: trivy-results.sarif
-
 
   ZAP-DAST:
     runs-on: ubuntu-latest
